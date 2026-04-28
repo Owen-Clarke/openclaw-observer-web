@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080b10" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>" />
+    <title>OpenClaw Observer</title>
+    <link rel="stylesheet" href="./styles.css?v=1" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="stage" aria-label="OpenClaw status overview">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">OpenClaw Observer</p>
+            <h1 id="headline">等待连接</h1>
+            <p class="headline-detail" id="headlineDetail">正在读取网关状态</p>
+          </div>
+          <div class="status-pill" id="statusPill">
+            <span class="dot"></span>
+            <span id="statusText">offline</span>
+          </div>
+        </div>
+
+        <div class="orbital-wrap" id="orbitalWrap">
+          <div class="grid-plane"></div>
+          <div class="ring ring-a"></div>
+          <div class="ring ring-b"></div>
+          <div class="ring ring-c"></div>
+          <div class="core">
+            <div class="core-shell"></div>
+            <div class="core-label">
+              <strong id="coreScore">--</strong>
+              <span id="coreCaption">未连接</span>
+            </div>
+          </div>
+          <div class="satellite sat-telegram"><span>TG</span></div>
+          <div class="satellite sat-agent"><span>🤖</span></div>
+          <div class="satellite sat-tasks"><span>📋</span></div>
+          <div class="signal-beam beam-a"></div>
+          <div class="signal-beam beam-b"></div>
+        </div>
+
+        <div class="overview" id="overview">
+          <div class="main-status">
+            <div class="score-block">
+              <span>当前状态</span>
+              <strong id="coreScoreSmall">--</strong>
+              <em id="coreCaptionSmall">未连接</em>
+            </div>
+            <div class="status-copy">
+              <h2 id="heroStatus">等待 OpenClaw 网关</h2>
+              <p id="heroDetail">如果长时间未连接，请检查右侧地址、Token 和网络。</p>
+            </div>
+          </div>
+
+          <div class="work-panel">
+            <div class="work-primary" id="workPrimary">
+              <span>当前 BOT 状态</span>
+              <strong id="workState">未知</strong>
+              <p id="workDetail">等待会话和任务数据。</p>
+            </div>
+            <div class="work-list">
+              <div class="work-row"><span>当前模型</span><strong id="activeModel">--</strong></div>
+              <div class="work-row"><span>最近会话</span><strong id="activeSession">--</strong></div>
+              <div class="work-row"><span>运行任务</span><strong id="activeTasks">--</strong></div>
+              <div class="work-row"><span>子 Agent</span><strong id="activeSubagents">--</strong></div>
+              <div class="work-row"><span>Token 消耗</span><strong id="activeUsage">--</strong></div>
+            </div>
+          </div>
+
+          <div class="status-grid">
+            <div class="status-card" id="cardGateway"><span>网关</span><strong id="overviewGateway">未连接</strong><p id="overviewGatewayDetail">等待 WebSocket 握手</p></div>
+            <div class="status-card" id="cardTelegram"><span>Telegram</span><strong id="overviewTelegram">未知</strong><p id="overviewTelegramDetail">等待频道状态</p></div>
+            <div class="status-card" id="cardAgent"><span>主 Agent</span><strong id="overviewAgent">--</strong><p id="overviewAgentDetail">等待健康检查</p></div>
+            <div class="status-card" id="cardTasks"><span>任务队列</span><strong id="overviewTasks">--</strong><p id="overviewTasksDetail">等待任务状态</p></div>
+          </div>
+        </div>
+
+        <div class="timeline" id="timeline"></div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-section">
+          <div class="section-head">
+            <h2>连接</h2>
+            <button class="icon-btn" id="saveBtn" title="保存并重连">↻</button>
+          </div>
+          <label>
+            <span>Gateway WebSocket</span>
+            <input id="gatewayUrl" autocomplete="off" placeholder="ws://127.0.0.1:18789" />
+          </label>
+          <label>
+            <span>Gateway Token</span>
+            <input id="gatewayToken" autocomplete="off" type="password" placeholder="输入 OpenClaw Gateway token" />
+          </label>
+          <div class="button-row">
+            <button id="connectBtn">连接</button>
+            <button class="secondary" id="disconnectBtn">断开</button>
+          </div>
+          <p class="hint">默认 ws://127.0.0.1:18789，用 SSH 隧道远程时连 localhost。</p>
+        </div>
+
+        <div class="panel-section metrics">
+          <div class="metric"><span>网关</span><strong id="metricGateway">--</strong></div>
+          <div class="metric"><span>Telegram</span><strong id="metricTelegram">--</strong></div>
+          <div class="metric"><span>插件</span><strong id="metricPlugins">--</strong></div>
+          <div class="metric"><span>任务</span><strong id="metricTasks">--</strong></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-head">
+            <h2>模型</h2>
+            <span id="modelSavedAt">--</span>
+          </div>
+          <label>
+            <span>当前默认模型</span>
+            <select id="modelSelect"></select>
+          </label>
+          <div class="button-row">
+            <button id="applyModelBtn">切换模型</button>
+            <button class="secondary" id="refreshBtn">刷新</button>
+          </div>
+          <p class="hint" id="modelHint">切换会修改 OpenClaw 默认模型配置。</p>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-head"><h2>实时摘要</h2><span id="lastSeen">--</span></div>
+          <div class="summary" id="summary"></div>
+        </div>
+
+        <div class="panel-section logbox">
+          <div class="section-head">
+            <h2>最近会话</h2>
+            <button class="icon-btn" id="clearLogBtn" title="清空">×</button>
+          </div>
+          <div id="eventLog"></div>
+        </div>
+      </aside>
+    </main>
+    <script src="./app.js?v=1"></script>
+  </body>
+</html>
