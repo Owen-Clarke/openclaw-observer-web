@@ -8,7 +8,9 @@
 
 ## 效果预览
 
-> **截图待补：部署后截一张发过来**
+![OpenClaw Observer](screenshot.jpg)
+
+*连接成功后的效果预览*
 
 ---
 
