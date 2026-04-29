@@ -94,13 +94,13 @@
           </label>
           <label>
             <span>Gateway Token</span>
-            <input id="gatewayToken" autocomplete="off" type="password" placeholder="输入 OpenClaw Gateway token" />
+            <input id="gatewayToken" autocomplete="off" type="password" placeholder="Token 从哪找？openclaw status 或 .openclaw/openclaw.json" />
           </label>
           <div class="button-row">
             <button id="connectBtn">连接</button>
             <button class="secondary" id="disconnectBtn">断开</button>
           </div>
-          <p class="hint">默认 ws://127.0.0.1:18789，用 SSH 隧道远程时连 localhost。</p>
+          <p class="hint">Token 等同密码，不要公开。远程连接用 SSH 隧道（见 README）。</p>
         </div>
 
         <div class="panel-section metrics">

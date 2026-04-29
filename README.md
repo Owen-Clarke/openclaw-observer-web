@@ -1,111 +1,159 @@
-# 🦞 OpenClaw Observer (Web)
+# 🦞 OpenClaw Observer（Web 版）
 
-> **实时监控 OpenClaw Gateway 运行状态。** 浏览器打开就能用。
+**用浏览器监控 OpenClaw Gateway 状态。** 不需要安装，填写地址 + Token 就能用。
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-一个纯前端的状态面板，通过 WebSocket 直连 OpenClaw Gateway，查看网关状态、Telegram 连接、活跃会话、任务队列、模型和 Token 用量。
-
-不需要安装任何东西，一个 `index.html` + 一个 `app.js`，任何设备都能跑。
+适合：自己架设了 OpenClaw、需要随时看状态的人。
 
 ---
 
-## 截图
+## 效果预览
 
-_（等你部署后截图发过来）_
+> **截图待补：部署后截一张发过来**
 
 ---
 
-## 快速使用
+## 快速上手
 
-### 方式一：直接打开（最简单）
+### 第一步：确认你的 Gateway 能用
+
+在运行 Gateway 的机器上执行：
 
 ```bash
-git clone https://github.com/你的用户名/openclaw-observer-web
+curl http://127.0.0.1:18789/health
+```
+
+看到 JSON 返回就说明 Gateway 在跑。
+
+### 第二步：找 Token
+
+```bash
+# 方法 A：配置文件里找
+cat ~/.openclaw/openclaw.json | grep token
+# 输出中 token 字段就是
+
+# 方法 B：直接问 CLI
+openclaw status 2>&1 | grep -i token
+```
+
+> ⚠️ **Token 是什么**：Gateway 的访问密钥，类
+
+密码，**不要公开分享**。
+
+### 第三步：启动 Web 服务
+
+**在本机（Linux/Mac/Windows PowerShell）：**
+
+```bash
+# 克隆或下载项目
+git clone https://github.com/Owen-Clarke/openclaw-observer-web
 cd openclaw-observer-web
+
+# 启动服务
 python3 -m http.server 8080
+# 浏览器打开 http://localhost:8080
 ```
 
-浏览器打开 `http://localhost:8080`，输入 Gateway 地址和 Token，点连接。
+**手机访问（和电脑同一局域网）：**
 
-### 方式二：单文件打开
+1. 查电脑 IP：`ip addr | grep 192.168`
+2. 浏览器打开 `http://电脑IP:8080`
+3. 填入电脑 IP:18789 和 Token
 
-用 VS Code 的 Live Server 插件，或者直接把 `index.html` 拖到浏览器（部分浏览器会限制 WebSocket）。
-
-### 方式三：Docker
+**VPS/服务器：**
 
 ```bash
-docker run -d -p 8080:80 -v $(pwd):/usr/share/nginx/html:ro nginx:alpine
+# 直接把端口暴露给局域网（或内网穿透）
+python3 -m http.server 8080 --bind 0.0.0.0
 ```
+
+### 第四步：填入连接信息
+
+| 字段 | 填什么 |
+|-------|--------|
+| Gateway URL | `ws://127.0.0.1:18789`（本机）或 `ws://你的域名:18789`（远程） |
+| Token | 上面第二步找到的 token |
+
+点**连接**，看到卫星围绕轨道旋转 = 连上了。
 
 ---
 
-## 配置
+## 远程连接（不在同机器上怎么办）
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| Gateway URL | WebSocket 地址 | `ws://127.0.0.1:18789` |
-| Gateway Token | 从 Gateway 获取 | `openclaw-2026` |
-
-在同一台机器上运行：直接填 `ws://127.0.0.1:18789`。
-远程连接：SSH 隧道或 VPN。
-
-### SSH 隧道示例
+### 方案 A：SSH 隧道（推荐，最安全）
 
 ```bash
-# Windows/Linux/Mac 都支持
-ssh -N -L 18789:127.0.0.1:18789 user@your-server
+# 在本地 Mac/Linux/Windows PowerShell 执行
+ssh -N -L 18789:127.0.0.1:18789 user@你的服务器IP
+# 保持这个窗口开着
+# 浏览器填 ws://127.0.0.1:18789
 ```
 
-然后浏览器访问 `http://localhost:8080`，Gateway 地址填 `ws://127.0.0.1:18789`。
+### 方案 B：内网穿透（如frp、自建 ngrok）
+
+把 `ws://你的域名:18789` 填入 URL 栏。
+
+### 方案 C：公网暴露（不推荐）
+
+把 Gateway 端口 18789 改为监听 0.0.0.0，然后用 `wss://你的域名:18789` 直接连。**确保有 Token 保护**。
 
 ---
 
-## 功能
+## 功能说明
 
-- ✅ **实时仪表盘** — Gateway 健康、Telegram 状态、Agent 信息、任务队列
-- ✅ **Token 用量** — 当前会话、累计 Token、实时增量
-- ✅ **模型切换** — 下拉框选模型，一键切换并重启 Gateway
-- ✅ **活跃会话** — 前 8 条会话（状态、时间、模型）
-- ✅ **24 格时间线** — 过去 24 次轮询的健康状态
-- ✅ **评分系统** — 0-100 健康评分，一目了然
-- ✅ **配置记忆** — URL 和 Token 保存在浏览器 localStorage
-- ✅ **PWA 支持** — 手机端添加到主屏幕，像原生 App
-
----
-
-## 技术原理
-
-```
-浏览器 ── WebSocket ──→ OpenClaw Gateway (ws://host:18789)
-```
-
-Gateway 暴露 WebSocket 接口，Observer 通过标准 RPC 协议获取状态数据：
-
-| RPC 方法 | 数据 |
-|----------|------|
-| `health` | Gateway 健康检查、插件列表、Agent |
-| `channels.status` | Telegram 等渠道状态 |
-| `status` | 任务队列（运行/排队/失败） |
-| `sessions.list` | 活跃会话列表 |
-| `usage.status` | Provider Token 消耗 |
-| `models.list` | 可用模型列表（用于切换） |
-| `config.get` | 当前配置（用于识别当前模型） |
-| `config.patch` | 修改配置（切换模型） |
+| 功能 | 说明 |
+|------|------|
+| 轨道仪表面板 | Gateway 在线 = 绿色；离线 = 红色 |
+| 状态摘要 | Telegram、Agent、任务、Token 用量一目了然 |
+| 实时用量 | 追踪 Token 消耗增量 |
+| 模型切换 | 下拉选模型，一键生效 |
+| 会话列表 | 最近 8 条会话状态 |
+| 24 格时间线 | 健康历史记录 |
+| 配置记忆 | 填过的地址和 Token 存在浏览器本地
 
 ---
 
-## 与 Electron 版的区别
+## 常见问题
 
-| | Electron 版 | Web 版 |
-|---|---|---|
-| 安装 | 需要 npm install + 200MB Electron | ❌ 不需要 |
-| GPU | 需要（Linux 易翻车）| ❌ 不需要 |
-| 手机 | ❌ 不支持 | ✅ 浏览器 + PWA |
-| 跨平台 | Win/Mac/Linux | 任何有浏览器的设备 |
-| 配置存储 | 本地文件 | 浏览器 localStorage |
-| 更新 | 需要重新拉代码 | 刷新即最新 |
-| 离线 | 不支持 | PWA 可配置 |
+**Q：连接不上，显示"连接关闭"**
+A：
+1. 地址是否填对（ws:// 不是 http://）
+2. Token 是否正确
+3. Gateway 是否还在跑（curl http://127.0.0.1:18789/health）
+4. 防火墙是否开了 18789
+
+**Q：Token 怎么找？**
+A：在 Gateway 机器上运行 `openclaw status` 或查 `~/.openclaw/openclaw.json` 里的 `auth.token` 字段。
+
+**Q：手机能用吗？**
+A：可以。浏览器打开，用 SSH 隧道或内网穿透，PWA 可"添加到主屏幕"像 App 一样。
+
+**Q：8080 端口被占用**
+A：换端口：`python3 -m http.server 8081`（或其他未用端口）
+
+**Q：连接成功但没数据**
+A：Gateway 没有暴露对应 RPC 方法，或 Token 无权限。检查 Gateway 版本 >= 2026.4.21。
+
+---
+
+## 技术参数
+
+- 纯前端，无依赖
+- WebSocket 直连 Gateway（polling）
+- 配置存浏览器 localStorage
+- PWA 可离线缓存
+- 更新：git pull + 刷新页面
+
+---
+
+## 与桌面版对比
+
+| | Electron 桌面版 | Web 版 |
+|--|--|--|
+| 安装 | npm install + 200MB Electron | ❌ 不需要 |
+| 系统要求 | 需要图形界面 | 任何浏览器 |
+| 手机支持 | ❌ | ✅ |
+| 更新 | 重新拉代码 | 刷新页面 |
+| 离线使用 | ❌ | ✅（PWA 缓存后）|
 
 ---
 
